@@ -1,0 +1,89 @@
+# Harnais de vérification de l'Académie IA (ADR-0016).
+#
+# Ce workflow tourne dans VOTRE dépôt, sur VOTRE runner GitHub. La plateforme
+# n'exécute rien : elle lit le résultat publié ici, lié au commit.
+#
+# Chaque module produit une vérification nommée « academie/module-N ». Elles
+# sont cumulatives : au module 3, les suites des modules 1 et 2 tournent encore,
+# donc une régression bloque la progression.
+#
+# Ce fichier fait partie du harnais : son empreinte est vérifiée. Le modifier
+# n'entraîne pas un échec, mais confie votre remise à un mentor.
+
+name: academie
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  module:
+    name: academie/module-${{ matrix.module }}
+    runs-on: ubuntu-latest
+    strategy:
+      # Chaque module est une vérification distincte : un échec au module 4
+      # n'empêche pas de voir le résultat des modules 1 et 2.
+      fail-fast: false
+      matrix:
+        # 18 est l'extra visuel, vendu à part : il suit le module 15.
+        module: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: annonces_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            web/package-lock.json
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      # À partir du module 3, les vérifications construisent aussi le front.
+      - name: Installer les dépendances du front
+        run: npm ci --prefix web
+
+      # Crée les tables de la base de vérification avec vos migrations, par le
+      # script « migrate » de votre package.json. Sans ce script, rien ne se passe.
+      - name: Appliquer vos migrations
+        run: npm run migrate --if-present
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/annonces_test
+
+      - name: Vérifications du module ${{ matrix.module }}
+        run: node academie/run.mjs ${{ matrix.module }}
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/annonces_test
+          # Des valeurs de vérification seulement : ce ne sont pas des secrets.
+          ORIGINE_INTERFACE: http://localhost:5173
+          # La même valeur que dans .env.example : une adresse construite avec
+          # ADRESSE_API doit être identique ici et sur votre machine.
+          ADRESSE_API: http://localhost:3000
+          SECRET_STOCKAGE: valeur-de-verification-du-stockage
+          SECRET_WEBHOOK: valeur-de-verification-du-prestataire
+          SECRET_TICKET: valeur-de-verification-du-ticket
+          # Renseignez ces deux secrets au module 15, quand votre application est
+          # déployée : la suite de mise en production interroge leurs adresses.
+          DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL }}
+          INTERFACE_URL: ${{ secrets.INTERFACE_URL }}

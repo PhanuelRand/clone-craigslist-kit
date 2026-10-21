@@ -1,0 +1,31 @@
+{
+  "name": "clone-craigslist",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "academie": "node academie/run.mjs",
+    "dev": "tsx watch --env-file-if-exists=.env src/serveur.ts",
+    "dev:web": "npm run dev --prefix web",
+    "web:install": "npm install --prefix web",
+    "migrate": "node --env-file-if-exists=.env scripts/migrer.mjs",
+    "test": "node scripts/tests.mjs",
+    "typecheck": "tsc --noEmit",
+    "start": "tsx src/serveur.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.23.1",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.0",
+    "hono": "^4.9.0",
+    "pg": "^8.23.0",
+    "tsx": "^4.20.0"
+  }
+}

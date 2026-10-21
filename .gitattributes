@@ -1,0 +1,8 @@
+# Fins de ligne identiques sur toutes les machines.
+#
+# La plateforme compare l'empreinte des fichiers du harnais à celle publiée par
+# l'Académie. Sans cette règle, un participant sous Windows obtiendrait une
+# copie de travail convertie en CRLF, et le moindre outil qui réécrit un de ces
+# fichiers produirait une empreinte différente : sa remise partirait en revue
+# mentor sans raison visible.
+* text=auto eol=lf

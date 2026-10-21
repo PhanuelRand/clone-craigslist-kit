@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+*.log
+.DS_Store
+# Les photos du stockage simulé (module 6) restent sur votre machine.
+stockage-local/
