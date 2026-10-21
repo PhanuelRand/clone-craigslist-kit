@@ -21,7 +21,10 @@ if (!process.env.DATABASE_URL) {
 const client = new pg.Client({ connectionString: process.env.DATABASE_URL })
 await client.connect()
 try {
-  const resultats = [await client.query(readFileSync(fichier, 'utf8'))].flat()
+  // PowerShell 5.1 enregistre parfois une marque d'ordre d'octets en tête du
+  // fichier : PostgreSQL la lirait comme du texte et refuserait la requête.
+  const texte = readFileSync(fichier, 'utf8').replace(/^\uFEFF/, '')
+  const resultats = [await client.query(texte)].flat()
   // La dernière requête du fichier est souvent celle qu'on veut lire.
   const derniere = resultats.at(-1)
   const colonnes = derniere?.fields?.map((champ) => champ.name) ?? []

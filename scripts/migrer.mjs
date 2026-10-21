@@ -50,7 +50,8 @@ try {
 
   for (const nom of fichiers) {
     if (deja.has(nom)) continue
-    const sql = readFileSync(join(dossier, nom), 'utf8')
+    // Sans la marque d'ordre d'octets que PowerShell 5.1 ajoute parfois.
+    const sql = readFileSync(join(dossier, nom), 'utf8').replace(/^\uFEFF/, '')
     // Une migration s'applique en entier ou pas du tout.
     await client.query('begin')
     try {
